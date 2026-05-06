@@ -150,6 +150,7 @@
       background: transparent;
       resize: none;
       color: #111;
+      overflow: hidden;
     }
     .to-block .company-name-input {
       font-weight: 700;
@@ -409,6 +410,7 @@
   <strong style="font-size:15px;letter-spacing:1px;">RESHUFFLE INVOICE GENERATOR</strong>
   <button onclick="window.print()">🖨 Print / Save PDF</button>
   <button onclick="resetForm()">↺ Reset</button>
+  <a href="work-order.html" style="color:#ccc;font-size:12px;text-decoration:none;margin-left:8px;">Work Order →</a>
 </div>
 
 <!-- Invoice -->
@@ -447,7 +449,7 @@
       <div class="to-block">
         <div class="section-label">To</div>
         <input type="text" class="company-name-input" id="toCompany" placeholder="Client Company Name" /><br /><br />
-        <textarea id="toAddress" rows="3" placeholder="Address line 1&#10;City, State – Pincode"></textarea>
+        <textarea id="toAddress" rows="3" placeholder="Address line 1&#10;City, State – Pincode" oninput="autoGrow(this)"></textarea>
         <input type="text" id="toGSTIN" placeholder="GSTIN (if applicable)" style="margin-top:4px;" />
       </div>
     </div>
@@ -549,6 +551,12 @@ Late payment: 2% per month after due date.</textarea>
 </div><!-- /#invoice -->
 
 <script>
+  // ── Auto-grow textarea ──
+  function autoGrow(el) {
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  }
+
   // ── Set today's date ──
   const today = new Date();
   const opts = { day: 'numeric', month: 'long', year: 'numeric' };
@@ -600,6 +608,7 @@ Late payment: 2% per month after due date.</textarea>
     if (!confirm('Reset the invoice? All entered data will be cleared.')) return;
     document.getElementById('toCompany').value  = '';
     document.getElementById('toAddress').value  = '';
+    autoGrow(document.getElementById('toAddress'));
     document.getElementById('toGSTIN').value    = '';
     document.getElementById('invoiceNo').value  = 'RESHUFFLE/2026/05/01';
     document.getElementById('invoiceDate').value = today.toLocaleDateString('en-IN', opts);
