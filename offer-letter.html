@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Offer Letter Generator – Reshuffle OPC</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Helvetica, Arial, sans-serif;
+      background: #f0f0f0;
+      color: #111;
+    }
+
+    /* ── Controls ── */
+    #controls {
+      background: #1a1a1a;
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    #controls button {
+      background: #fff;
+      color: #1a1a1a;
+      border: none;
+      padding: 8px 20px;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 4px;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+    }
+    #controls button:hover { background: #ddd; }
+    #controls a { color: #ccc; font-size: 12px; text-decoration: none; margin-left: 4px; }
+    #controls a:hover { color: #fff; }
+
+    /* ── Page ── */
+    #page {
+      width: 794px;
+      min-height: 1123px;
+      background: #fff;
+      margin: 24px auto;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+      display: flex;
+      flex-direction: column;
+    }
+    @page { size: A4; margin: 0; }
+
+    /* ── Letterhead header (shared with letterhead.html) ── */
+    .lh-wordmark {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      padding: 30px 40px 24px;
+    }
+    .lh-wordmark img {
+      width: 100%;
+      height: auto;
+    }
+    .lh-contact {
+      background: #000;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 40px;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+    .lh-contact .right { text-align: right; }
+
+    /* ── Letter body ── */
+    .ol-body {
+      flex: 1;
+      padding: 40px 56px 30px;
+      font-size: 15px;
+      line-height: 1.8;
+      color: #1a1a1a;
+    }
+    .ol-title {
+      text-align: center;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 30px;
+    }
+    .ol-to-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+    .ol-to-row .to { font-weight: 700; }
+    .ol-date input {
+      border: none; border-bottom: 1px dashed #bbb;
+      font-family: inherit; font-size: 15px; text-align: right;
+      outline: none; background: transparent; color: #1a1a1a; width: 150px;
+    }
+    .ol-addr { margin-bottom: 26px; }
+    .ol-addr input {
+      display: block;
+      border: none; border-bottom: 1px dashed #ccc;
+      font-family: inherit; font-size: 15px; line-height: 1.9;
+      outline: none; background: transparent; color: #1a1a1a;
+      width: 60%; margin-bottom: 2px;
+    }
+    .ol-body p { margin-bottom: 16px; }
+    .ol-body textarea {
+      width: 100%;
+      border: 1px dashed #ddd;
+      border-radius: 4px;
+      font-family: inherit; font-size: 15px; line-height: 1.8;
+      color: #1a1a1a; padding: 12px; resize: vertical; outline: none;
+      background: #fafafa;
+      overflow: hidden;
+    }
+    .ol-inline {
+      border: none; border-bottom: 1px dashed #bbb;
+      font-family: inherit; font-size: 15px;
+      outline: none; background: transparent; color: #1a1a1a;
+    }
+    .ol-sign { margin-top: 30px; }
+    .ol-sign img { height: 58px; width: auto; mix-blend-mode: multiply; display: block; }
+
+    @media print {
+      html, body { background: #fff; }
+      #controls { display: none; }
+      #page { margin: 0; box-shadow: none; width: 100%; min-height: auto; }
+      input, textarea { border: none !important; background: #fff !important; }
+      .ol-body textarea { padding: 0; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="controls">
+  <strong style="font-size:15px;letter-spacing:1px;">RESHUFFLE OFFER LETTER</strong>
+  <button onclick="savePDF()">Save PDF</button>
+  <button onclick="resetForm()">↺ Reset</button>
+  <a href="invoice-generator.html">Invoice →</a>
+  <a href="work-order.html">Work Order →</a>
+  <a href="salary-slip.html">Salary Slip →</a>
+  <a href="letterhead.html">Letterhead →</a>
+</div>
+
+<div id="page">
+
+  <!-- Letterhead header -->
+  <div class="lh-wordmark">
+    <img src="logo-trim.png" alt="Reshuffle" />
+  </div>
+  <div class="lh-contact">
+    <div>
+      GSTIN- 22AAPCR2685E1Z9<br />
+      +91 7879722663
+    </div>
+    <div class="right">
+      reshufflebusiness@gmail.com<br />
+      www.reshxffle.com
+    </div>
+  </div>
+
+  <!-- Letter body -->
+  <div class="ol-body">
+    <div class="ol-title">JOB OFFER LETTER</div>
+
+    <div class="ol-to-row">
+      <div class="to">To:</div>
+      <div class="ol-date"><input id="olDate" value="2nd Jan, 2026" /></div>
+    </div>
+
+    <div class="ol-addr">
+      <input id="olName" value="Yash Raj Rathi" />
+      <input id="olAddr1" value="Khata No 349, Kh. 176/7," />
+      <input id="olAddr2" value="Shivanand Nagar, Near Nair Baba House," />
+      <input id="olAddr3" value="Gudiyari, Raipur" />
+    </div>
+
+    <p>Dear <input class="ol-inline" id="olSalutation" value="Mr. Rathi" style="width:110px;" />,</p>
+
+    <p>We are pleased to offer you the
+      <input class="ol-inline" id="olRole" value="Product Manager" style="width:180px;" /> position at Reshuffle, starting
+      <input class="ol-inline" id="olStart" value="5th Jan, 2026" style="width:130px;" />. Your skills and experience will be a valuable asset to our team.</p>
+
+    <p>
+      <textarea id="olDuties" rows="4" oninput="autoGrow(this)">In this full-time role, you will manage the end-to-end product lifecycle, gather and prioritize business requirements, coordinate with engineering, design, and stakeholders, and ensure the successful delivery of high-quality software products, reporting to Ruchi Xalxo, Senior Manager. Your monthly compensation will be ₹37,000, along with benefits as per our company policies.</textarea>
+    </p>
+
+    <p>We look forward to welcoming you and supporting your growth at Reshuffle.</p>
+
+    <p>Sincerely,</p>
+
+    <div class="ol-sign">
+      <img src="ruchisign-trim.png" alt="Signature" />
+      <input class="ol-inline" id="olSignName" value="Ruchi Xalxo" style="width:200px;" /><br />
+      <input class="ol-inline" id="olSignTitle" value="Senior Manager" style="width:200px;" />
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function autoGrow(el) {
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  }
+  document.querySelectorAll('.ol-body textarea').forEach(autoGrow);
+
+  function resetForm() {
+    if (!confirm('Reset the offer letter? All entered data will be cleared.')) return;
+    const v = {
+      olDate: '2nd Jan, 2026', olName: 'Yash Raj Rathi',
+      olAddr1: 'Khata No 349, Kh. 176/7,', olAddr2: 'Shivanand Nagar, Near Nair Baba House,',
+      olAddr3: 'Gudiyari, Raipur', olSalutation: 'Mr. Rathi', olRole: 'Product Manager',
+      olStart: '5th Jan, 2026', olSignName: 'Ruchi Xalxo', olSignTitle: 'Senior Manager'
+    };
+    for (const k in v) document.getElementById(k).value = v[k];
+    const duties = document.getElementById('olDuties');
+    duties.value = 'In this full-time role, you will manage the end-to-end product lifecycle, gather and prioritize business requirements, coordinate with engineering, design, and stakeholders, and ensure the successful delivery of high-quality software products, reporting to Ruchi Xalxo, Senior Manager. Your monthly compensation will be ₹37,000, along with benefits as per our company policies.';
+    autoGrow(duties);
+  }
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
+<script>
+  function savePDF() {
+    var el = document.getElementById('page');
+    var opt = {
+      margin: 0,
+      filename: 'reshuffle-offer-letter.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 2, useCORS: true, backgroundColor: null,
+        windowWidth: el.scrollWidth,
+        onclone: function (doc) {
+          doc.querySelectorAll('input, textarea').forEach(function (i) {
+            i.style.border = 'none';
+            i.style.borderBottom = 'none';
+            i.style.background = 'transparent';
+          });
+          doc.querySelectorAll('.add-row-btn, .remove-row-btn, .remove-cell, .no-print').forEach(function (e) {
+            e.style.display = 'none';
+          });
+        }
+      },
+      jsPDF: { unit: 'px', format: [el.offsetWidth, el.offsetHeight], orientation: 'portrait', hotfixes: ['px_scaling'] }
+    };
+    html2pdf().set(opt).from(el).save();
+  }
+</script>
+</body>
+</html>

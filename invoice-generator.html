@@ -408,7 +408,7 @@
 <!-- Controls -->
 <div id="controls">
   <strong style="font-size:15px;letter-spacing:1px;">RESHUFFLE INVOICE GENERATOR</strong>
-  <button onclick="window.print()">🖨 Print / Save PDF</button>
+  <button onclick="savePDF()">Save PDF</button>
   <button onclick="resetForm()">↺ Reset</button>
   <a href="work-order.html" style="color:#ccc;font-size:12px;text-decoration:none;margin-left:8px;">Work Order →</a>
 </div>
@@ -627,6 +627,34 @@ Late payment: 2% per month after due date.</textarea>
 
   // ── Init ──
   addRow('Video Production / Creative Services (as discussed)', '');
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
+<script>
+  function savePDF() {
+    var el = document.getElementById('invoice');
+    var opt = {
+      margin: 0,
+      filename: 'reshuffle-invoice.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 2, useCORS: true, backgroundColor: null,
+        windowWidth: el.scrollWidth,
+        onclone: function (doc) {
+          doc.querySelectorAll('input, textarea').forEach(function (i) {
+            i.style.border = 'none';
+            i.style.borderBottom = 'none';
+            i.style.background = 'transparent';
+          });
+          doc.querySelectorAll('.add-row-btn, .remove-row-btn, .remove-cell, .no-print').forEach(function (e) {
+            e.style.display = 'none';
+          });
+        }
+      },
+      jsPDF: { unit: 'px', format: [el.offsetWidth, el.offsetHeight], orientation: 'portrait', hotfixes: ['px_scaling'] }
+    };
+    html2pdf().set(opt).from(el).save();
+  }
 </script>
 </body>
 </html>
