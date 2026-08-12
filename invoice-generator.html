@@ -633,25 +633,49 @@ Late payment: 2% per month after due date.</textarea>
 <script>
   function savePDF() {
     var el = document.getElementById('invoice');
+    var mmPerPx = 25.4 / 96;
+    var pageWidthMm = el.offsetWidth * mmPerPx;
+    var pageHeightMm = el.offsetHeight * mmPerPx;
+
     var opt = {
       margin: 0,
       filename: 'reshuffle-invoice.pdf',
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: {
-        scale: 2, useCORS: true, backgroundColor: null,
-        windowWidth: el.scrollWidth,
+        scale: 2, useCORS: true, backgroundColor: '#ffffff',
         onclone: function (doc) {
-          doc.querySelectorAll('input, textarea').forEach(function (i) {
-            i.style.border = 'none';
-            i.style.borderBottom = 'none';
-            i.style.background = 'transparent';
+          // Replace live form controls with static text so html2canvas
+          // can't render placeholder text and can't clip wrapped content.
+          doc.querySelectorAll('textarea').forEach(function (ta) {
+            var cs = getComputedStyle(ta);
+            var div = doc.createElement('div');
+            div.textContent = ta.value;
+            div.style.font = cs.font;
+            div.style.color = cs.color;
+            div.style.lineHeight = cs.lineHeight;
+            div.style.padding = cs.padding;
+            div.style.width = cs.width;
+            div.style.whiteSpace = 'pre-wrap';
+            div.style.wordWrap = 'break-word';
+            ta.parentNode.replaceChild(div, ta);
+          });
+          doc.querySelectorAll('input[type="text"], input[type="number"]').forEach(function (inp) {
+            var cs = getComputedStyle(inp);
+            var span = doc.createElement('span');
+            span.textContent = inp.value;
+            span.style.font = cs.font;
+            span.style.color = cs.color;
+            span.style.textAlign = cs.textAlign;
+            span.style.display = 'inline-block';
+            span.style.width = cs.width;
+            inp.parentNode.replaceChild(span, inp);
           });
           doc.querySelectorAll('.add-row-btn, .remove-row-btn, .remove-cell, .no-print').forEach(function (e) {
             e.style.display = 'none';
           });
         }
       },
-      jsPDF: { unit: 'px', format: [el.offsetWidth, el.offsetHeight], orientation: 'portrait', hotfixes: ['px_scaling'] }
+      jsPDF: { unit: 'mm', format: [pageWidthMm, pageHeightMm], orientation: 'portrait' }
     };
     html2pdf().set(opt).from(el).save();
   }
