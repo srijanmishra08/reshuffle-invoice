@@ -83,6 +83,16 @@
     toast(entered ? "Connected. New PDFs will be saved to the dashboard." : "Disconnected from the dashboard.", entered ? "ok" : "warn");
   };
 
+  var ISSUES = {
+    NO_DETAILS: "no invoice details were sent.",
+    NO_NUMBER: "the invoice has no number.",
+    NO_DATE: "the date could not be read.",
+    BAD_ITEMS: "a line item amount is not a plain number.",
+    NUMBER_USED: "another dashboard invoice already uses this number.",
+    TOTAL_MISMATCH: "the total does not match the line items.",
+    NO_SETTINGS: "the organisation state is not set on the dashboard."
+  };
+
   function upload(blob, meta) {
     var key = readKey();
     if (!key) {
@@ -92,7 +102,7 @@
     var retry = function () { upload(blob, meta); };
     var form = new FormData();
     form.append("file", blob, meta.filename);
-    ["docType", "number", "partyName", "amountText", "dateText", "filename"].forEach(function (name) {
+    ["docType", "number", "partyName", "amountText", "dateText", "filename", "invoiceJson"].forEach(function (name) {
       form.append(name, meta[name] || "");
     });
     toast("Saving to the dashboard…");
@@ -100,7 +110,13 @@
       .then(function (res) {
         return res.json().catch(function () { return {}; }).then(function (body) {
           if (res.ok) {
-            toast(body.data && body.data.duplicate ? "This exact PDF is already in the dashboard." : "Saved to the dashboard ✓", "ok");
+            var data = body.data || {};
+            if (data.duplicate) toast("This exact PDF is already in the dashboard.", "ok");
+            else if (data.recorded) toast("Saved to the dashboard and recorded as an invoice ✓", "ok");
+            else if (data.invoiceLinked) toast("Saved to the dashboard and attached to its invoice ✓", "ok");
+            else if (data.recordIssue === "NEW_CLIENT") toast("Saved to the dashboard. This client is new there: open Invoice PDFs and press Record as invoice.", "warn");
+            else if (data.recordIssue) toast("Saved to the dashboard, but not recorded as an invoice: " + (ISSUES[data.recordIssue] || data.recordIssue) + " Open Invoice PDFs to fix it.", "warn");
+            else toast("Saved to the dashboard ✓", "ok");
             return true;
           }
           if (res.status === 401) toast("The dashboard key is no longer valid. Click the corner button and enter a new one.", "error");
@@ -121,11 +137,33 @@
     return typeof el.value === "string" ? el.value : (el.textContent || "");
   }
 
+  /** The client, line items and notes of the invoice on screen, as JSON, so the dashboard can record it as an invoice. */
+  function invoiceDetails() {
+    var items = [];
+    var rows = document.querySelectorAll("#itemsBody tr");
+    for (var i = 0; i < rows.length; i++) {
+      var desc = rows[i].querySelector("textarea");
+      var amount = rows[i].querySelector("input.amount-input");
+      var d = desc ? desc.value.trim() : "";
+      var a = amount ? String(amount.value).trim() : "";
+      if (d || a) items.push({ description: d, amount: a });
+    }
+    return JSON.stringify({
+      clientName: field("toCompany").trim(),
+      clientGstin: field("toGSTIN").trim(),
+      clientAddress: field("toAddress").trim(),
+      items: items,
+      advance: field("advanceInput").trim(),
+      paymentTerms: field("paymentTerms").trim(),
+      notes: field("notes").trim()
+    });
+  }
+
   /** A file name made from the document number, for example RESHUFFLE-2026-05-01.pdf. */
   function fileName(number, fallback) {
     var base = String(number || "").replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
     return (base || fallback) + ".pdf";
   }
 
-  window.DashboardSync = { upload: upload, field: field, fileName: fileName };
+  window.DashboardSync = { upload: upload, field: field, fileName: fileName, invoiceDetails: invoiceDetails };
 })();
