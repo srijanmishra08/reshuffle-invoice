@@ -689,7 +689,8 @@ Late payment: 2% per month after due date.</textarea>
           partyName: f('toCompany'),
           amountText: f('tdTotal'),
           dateText: f('invoiceDate'),
-          filename: DashboardSync.fileName(f('invoiceNo'), 'reshuffle-invoice')
+          filename: DashboardSync.fileName(f('invoiceNo'), 'reshuffle-invoice'),
+          invoiceJson: DashboardSync.invoiceDetails()
         });
       }
     });
