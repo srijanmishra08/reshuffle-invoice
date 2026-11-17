@@ -630,6 +630,7 @@ Late payment: 2% per month after due date.</textarea>
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
+<script src="dashboard-sync.js"></script>
 <script>
   function savePDF() {
     var el = document.getElementById('invoice');
@@ -677,7 +678,21 @@ Late payment: 2% per month after due date.</textarea>
       },
       jsPDF: { unit: 'mm', format: [pageWidthMm, pageHeightMm], orientation: 'portrait' }
     };
-    html2pdf().set(opt).from(el).save();
+    // Download as before, then also save a copy in the dashboard.
+    html2pdf().set(opt).from(el).toPdf().get('pdf').then(function (pdf) {
+      pdf.save(opt.filename);
+      if (window.DashboardSync) {
+        var f = DashboardSync.field;
+        DashboardSync.upload(pdf.output('blob'), {
+          docType: 'INVOICE',
+          number: f('invoiceNo'),
+          partyName: f('toCompany'),
+          amountText: f('tdTotal'),
+          dateText: f('invoiceDate'),
+          filename: DashboardSync.fileName(f('invoiceNo'), 'reshuffle-invoice')
+        });
+      }
+    });
   }
 </script>
 </body>
