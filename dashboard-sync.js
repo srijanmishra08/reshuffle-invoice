@@ -1,7 +1,7 @@
 /*
  * Sends each invoice and work order PDF to the Reshuffle dashboard as well as downloading it.
  *
- * Setup, once per browser: on the dashboard open Finance > Invoice PDFs, make a key, then click
+ * Setup, once per browser: on the dashboard open Finance > Invoices > PDFs from invoice software, make a key, then click
  * "Dashboard: not connected" in the corner of this page and paste it. The key is kept only in this
  * browser (localStorage). It can upload PDFs and nothing else, and it can be revoked on the dashboard.
  *
@@ -69,7 +69,7 @@
 
   control.onclick = function () {
     var entered = window.prompt(
-      "Paste the dashboard key (made on the dashboard under Finance > Invoice PDFs).\nLeave it empty to disconnect.",
+      "Paste the dashboard key (made on the dashboard under Finance > Invoices > PDFs from invoice software).\nLeave it empty to disconnect.",
       ""
     );
     if (entered === null) return;
@@ -114,8 +114,8 @@
             if (data.duplicate) toast("This exact PDF is already in the dashboard.", "ok");
             else if (data.recorded) toast("Saved to the dashboard and recorded as an invoice ✓", "ok");
             else if (data.invoiceLinked) toast("Saved to the dashboard and attached to its invoice ✓", "ok");
-            else if (data.recordIssue === "NEW_CLIENT") toast("Saved to the dashboard. This client is new there: open Invoice PDFs and press Record as invoice.", "warn");
-            else if (data.recordIssue) toast("Saved to the dashboard, but not recorded as an invoice: " + (ISSUES[data.recordIssue] || data.recordIssue) + " Open Invoice PDFs to fix it.", "warn");
+            else if (data.recordIssue === "NEW_CLIENT") toast("Saved to the dashboard. The client could not be created there: open Invoices > PDFs from invoice software and press Record as invoice.", "warn");
+            else if (data.recordIssue) toast("Saved to the dashboard, but not recorded as an invoice: " + (ISSUES[data.recordIssue] || data.recordIssue) + " Open Invoices > PDFs from invoice software to fix it.", "warn");
             else toast("Saved to the dashboard ✓", "ok");
             return true;
           }
