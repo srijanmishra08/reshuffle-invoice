@@ -610,8 +610,8 @@ Late payment: 2% per month after due date.</textarea>
     document.getElementById('toAddress').value  = '';
     autoGrow(document.getElementById('toAddress'));
     document.getElementById('toGSTIN').value    = '';
-    document.getElementById('invoiceNo').value  = 'RESHUFFLE/2026/05/01';
     document.getElementById('invoiceDate').value = today.toLocaleDateString('en-IN', opts);
+    if (window.refreshInvoiceNumber) window.refreshInvoiceNumber(true);
     document.getElementById('advanceInput').value = '0';
     document.getElementById('paymentTerms').value = '50% Upfront | 50% on Completion';
     document.getElementById('notes').value = 'All amounts in INR. Subject to Raipur jurisdiction.\nLate payment: 2% per month after due date.';
@@ -632,6 +632,31 @@ Late payment: 2% per month after due date.</textarea>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
 <script src="dashboard-sync.js"></script>
 <script>
+  // ── Invoice number: RESHUFFLE/YEAR/MONTH/NN, for example RESHUFFLE/2026/05/01 ──
+  // The year and month come from the invoice date. The sequence number comes from the dashboard (one more than the highest
+  // number already used that month); without a connection it starts at 01. A number typed by hand in another style is left alone.
+  var AUTO_NUMBER = /^RESHUFFLE\/\d{4}\/\d{2}\/\d+$/;
+  function invoiceMonth() {
+    var t = Date.parse(document.getElementById('invoiceDate').value);
+    var d = isNaN(t) ? new Date() : new Date(t);
+    return { year: d.getFullYear(), month: d.getMonth() + 1 };
+  }
+  function pad2(n) { return n < 10 ? '0' + n : String(n); }
+  window.refreshInvoiceNumber = function (force) {
+    var el = document.getElementById('invoiceNo');
+    var current = el.value.trim();
+    if (!force && current && !AUTO_NUMBER.test(current)) return;
+    var p = invoiceMonth();
+    el.value = 'RESHUFFLE/' + p.year + '/' + pad2(p.month) + '/01';
+    if (!window.DashboardSync) return;
+    DashboardSync.nextNumber(p.year, p.month).then(function (next) {
+      var now = el.value.trim();
+      if (next && (force || !now || AUTO_NUMBER.test(now))) el.value = next;
+    });
+  };
+  document.getElementById('invoiceDate').addEventListener('change', function () { window.refreshInvoiceNumber(); });
+  window.refreshInvoiceNumber();
+
   function savePDF() {
     var el = document.getElementById('invoice');
     var mmPerPx = 25.4 / 96;
@@ -691,6 +716,9 @@ Late payment: 2% per month after due date.</textarea>
           dateText: f('invoiceDate'),
           filename: DashboardSync.fileName(f('invoiceNo'), 'reshuffle-invoice'),
           invoiceJson: DashboardSync.invoiceDetails()
+        }).then(function (saved) {
+          // The number just used is now taken in the dashboard, so show the next one for the next invoice.
+          if (saved) window.refreshInvoiceNumber(true);
         });
       }
     });

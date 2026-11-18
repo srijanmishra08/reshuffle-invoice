@@ -130,6 +130,20 @@
       });
   }
 
+  /**
+   * The next invoice number for a month, from the dashboard (RESHUFFLE/2026/05/01 style). Resolves to null when this browser is
+   * not connected or the dashboard cannot be reached, so the caller keeps whatever number it has.
+   */
+  function nextNumber(year, month) {
+    var key = readKey();
+    if (!key) return Promise.resolve(null);
+    var url = DASHBOARD_URL + "/api/ingest/next-number?prefix=RESHUFFLE&year=" + encodeURIComponent(year) + "&month=" + encodeURIComponent(month);
+    return fetch(url, { headers: { Authorization: "Bearer " + key }, cache: "no-store" })
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (body) { return body && body.data && body.data.number ? String(body.data.number) : null; })
+      .catch(function () { return null; });
+  }
+
   /** The value of a form field, or the text of a table cell. */
   function field(id) {
     var el = document.getElementById(id);
@@ -181,5 +195,5 @@
     return (base || fallback) + ".pdf";
   }
 
-  window.DashboardSync = { upload: upload, field: field, fileName: fileName, invoiceDetails: invoiceDetails };
+  window.DashboardSync = { upload: upload, field: field, fileName: fileName, invoiceDetails: invoiceDetails, nextNumber: nextNumber };
 })();
