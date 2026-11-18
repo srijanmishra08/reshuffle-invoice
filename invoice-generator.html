@@ -611,7 +611,7 @@ Late payment: 2% per month after due date.</textarea>
     autoGrow(document.getElementById('toAddress'));
     document.getElementById('toGSTIN').value    = '';
     document.getElementById('invoiceDate').value = today.toLocaleDateString('en-IN', opts);
-    if (window.refreshInvoiceNumber) window.refreshInvoiceNumber(true);
+    if (window.refreshInvoiceNumber) window.refreshInvoiceNumber({ force: true, fallback: true });
     document.getElementById('advanceInput').value = '0';
     document.getElementById('paymentTerms').value = '50% Upfront | 50% on Completion';
     document.getElementById('notes').value = 'All amounts in INR. Subject to Raipur jurisdiction.\nLate payment: 2% per month after due date.';
@@ -633,29 +633,51 @@ Late payment: 2% per month after due date.</textarea>
 <script src="dashboard-sync.js"></script>
 <script>
   // ── Invoice number: RESHUFFLE/YEAR/MONTH/NN, for example RESHUFFLE/2026/05/01 ──
-  // The year and month come from the invoice date. The sequence number comes from the dashboard (one more than the highest
-  // number already used that month); without a connection it starts at 01. A number typed by hand in another style is left alone.
+  // Year and month come from the invoice date. The sequence number comes from the dashboard: one more than the highest invoice
+  // the dashboard has accepted that month. A PDF the dashboard refused, or an invoice deleted there, gives its number back, so
+  // the number is asked for again whenever this page is shown, not counted here. Without a connection it starts at 01.
   var AUTO_NUMBER = /^RESHUFFLE\/\d{4}\/\d{2}\/\d+$/;
+  var numberTyped = false; // the person typed a number themselves: leave it alone unless they reset or save
   function invoiceMonth() {
     var t = Date.parse(document.getElementById('invoiceDate').value);
     var d = isNaN(t) ? new Date() : new Date(t);
     return { year: d.getFullYear(), month: d.getMonth() + 1 };
   }
   function pad2(n) { return n < 10 ? '0' + n : String(n); }
-  window.refreshInvoiceNumber = function (force) {
+  // options.force: replace whatever is there. options.fallback: if the dashboard cannot be asked, use 01 for the month.
+  window.refreshInvoiceNumber = function (options) {
+    options = options || {};
     var el = document.getElementById('invoiceNo');
-    var current = el.value.trim();
-    if (!force && current && !AUTO_NUMBER.test(current)) return;
-    var p = invoiceMonth();
-    el.value = 'RESHUFFLE/' + p.year + '/' + pad2(p.month) + '/01';
-    if (!window.DashboardSync) return;
-    DashboardSync.nextNumber(p.year, p.month).then(function (next) {
+    var mayReplace = function () {
       var now = el.value.trim();
-      if (next && (force || !now || AUTO_NUMBER.test(now))) el.value = next;
+      return options.force || (!numberTyped && (!now || AUTO_NUMBER.test(now)));
+    };
+    if (options.force) numberTyped = false;
+    if (!mayReplace()) return;
+    var p = invoiceMonth();
+    var fallback = 'RESHUFFLE/' + p.year + '/' + pad2(p.month) + '/01';
+    if (!window.DashboardSync) { if (options.fallback) el.value = fallback; return; }
+    DashboardSync.nextNumber(p.year, p.month).then(function (next) {
+      if (!mayReplace()) return;
+      if (next) el.value = next;
+      else if (options.fallback) el.value = fallback;
     });
   };
-  document.getElementById('invoiceDate').addEventListener('change', function () { window.refreshInvoiceNumber(); });
-  window.refreshInvoiceNumber();
+  document.getElementById('invoiceNo').addEventListener('input', function () { numberTyped = true; });
+  document.getElementById('invoiceDate').addEventListener('change', function () {
+    if (AUTO_NUMBER.test(document.getElementById('invoiceNo').value.trim())) numberTyped = false;
+    window.refreshInvoiceNumber({ fallback: true });
+  });
+  // Coming back to this page (from the dashboard, say, after deleting an invoice there) asks again.
+  var lastNumberCheck = 0;
+  function recheckNumber() {
+    if (document.visibilityState === 'hidden' || Date.now() - lastNumberCheck < 3000) return;
+    lastNumberCheck = Date.now();
+    window.refreshInvoiceNumber();
+  }
+  document.addEventListener('visibilitychange', recheckNumber);
+  window.addEventListener('focus', recheckNumber);
+  window.refreshInvoiceNumber({ fallback: true });
 
   function savePDF() {
     var el = document.getElementById('invoice');
@@ -717,8 +739,9 @@ Late payment: 2% per month after due date.</textarea>
           filename: DashboardSync.fileName(f('invoiceNo'), 'reshuffle-invoice'),
           invoiceJson: DashboardSync.invoiceDetails()
         }).then(function (saved) {
-          // The number just used is now taken in the dashboard, so show the next one for the next invoice.
-          if (saved) window.refreshInvoiceNumber(true);
+          // Ask the dashboard again: if it accepted this invoice the next number is shown, and if it refused it
+          // (a missing amount, a number already used) the same number comes back for another try.
+          if (saved) window.refreshInvoiceNumber({ force: true });
         });
       }
     });
