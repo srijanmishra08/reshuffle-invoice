@@ -148,7 +148,23 @@
       var a = amount ? String(amount.value).trim() : "";
       if (d || a) items.push({ description: d, amount: a });
     }
+    // Who issued it, read from the "From" block. The dashboard uses this once, to fill an empty Settings page.
+    var from = document.querySelector(".from-block");
+    var fromText = from ? from.textContent : "";
+    var gstinMatch = fromText.match(/\b\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]\b/);
+    var fromName = from && from.querySelector(".company-name") ? from.querySelector(".company-name").textContent.trim() : "";
+    var fromLines = [];
+    if (from) {
+      var ps = from.querySelectorAll("p");
+      for (var j = 0; j < ps.length; j++) {
+        var line = ps[j].textContent.trim();
+        if (line && line !== fromName && !/^GSTIN/i.test(line)) fromLines.push(line);
+      }
+    }
     return JSON.stringify({
+      issuerName: fromName,
+      issuerGstin: gstinMatch ? gstinMatch[0] : "",
+      issuerAddress: fromLines.slice(1).join(", "),
       clientName: field("toCompany").trim(),
       clientGstin: field("toGSTIN").trim(),
       clientAddress: field("toAddress").trim(),
